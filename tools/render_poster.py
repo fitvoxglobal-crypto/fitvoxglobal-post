@@ -4,7 +4,7 @@
 Usage: python3 tools/render_poster.py <poster.dc.html> <out.jpg>
 
 Needs: python3 + playwright, /usr/bin/google-chrome, npm (for the two fonts).
-The logo comes from assets/logo-f.png in this repo.
+The logo comes from assets/logo-wordmark-white.png in this repo.
 """
 import os
 import re
@@ -13,7 +13,7 @@ import sys
 import tarfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOGO = os.path.join(ROOT, "assets", "logo-f.png")
+LOGO = os.path.join(ROOT, "assets", "logo-wordmark-white.png")
 FONT_DIR = "/tmp/fitvox-fonts"
 ACCENT = "#86D6AB"
 
