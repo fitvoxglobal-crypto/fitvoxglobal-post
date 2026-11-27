@@ -4,7 +4,7 @@
 Usage: python3 tools/render_poster.py <poster.dc.html> <out.jpg>
 
 Needs: python3 + playwright, /usr/bin/google-chrome, npm (for the two fonts).
-The logo comes from assets/logo-wordmark-white.png in this repo.
+The logos come from assets/ in this repo (white wordmark; dark wordmark for light posters).
 """
 import os
 import re
@@ -14,6 +14,7 @@ import tarfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO = os.path.join(ROOT, "assets", "logo-wordmark-white.png")
+LOGO_DARK = os.path.join(ROOT, "assets", "logo-wordmark-dark.png")
 FONT_DIR = "/tmp/fitvox-fonts"
 ACCENT = "#86D6AB"
 
@@ -36,8 +37,18 @@ def main(src, out_jpg):
     m = re.search(r"<x-dc>.*?</helmet>\s*(<div style=.*)</x-dc>", html, re.S)
     if not m:
         sys.exit("could not find the poster markup in " + src)
-    inner = m.group(1).replace("{{accent}}", ACCENT)
-    inner = re.sub(r'src="/_blob/[0-9a-f]+"', 'src="file://%s"' % LOGO, inner)
+    # accent colour = the default declared in the file's data-props (falls back to mint)
+    am = re.search(r'"accent":\{[^}]*"default":"(#[0-9A-Fa-f]{6})"', html)
+    accent = am.group(1) if am else ACCENT
+    inner = m.group(1).replace("{{accent}}", accent)
+
+    # logo: white wordmark on dark posters, dark wordmark on light ones (img tag has data-logo="dark")
+    def logo(mt):
+        tag = mt.group(0)
+        path = LOGO_DARK if 'data-logo="dark"' in tag else LOGO
+        return re.sub(r'src="/_blob/[0-9a-f]+"', 'src="file://%s"' % path, tag)
+
+    inner = re.sub(r'<img[^>]*src="/_blob/[0-9a-f]+"[^>]*>', logo, inner)
     jak = ensure_font("@fontsource-variable/plus-jakarta-sans", "plus-jakarta-sans-latin-wght-normal.woff2")
     mon = ensure_font("@fontsource-variable/montserrat", "montserrat-latin-wght-italic.woff2")
     page = (
