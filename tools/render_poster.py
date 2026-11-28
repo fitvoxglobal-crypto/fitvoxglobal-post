@@ -5,6 +5,7 @@ Usage: python3 tools/render_poster.py <poster.dc.html> <out.jpg>
 
 Needs: python3 + playwright, /usr/bin/google-chrome, npm (for the two fonts).
 The logos come from assets/ in this repo (white wordmark; dark wordmark for light posters).
+Photos: an <img> with data-local="photos/<file>.jpg" is read from the photos/ folder of this repo.
 """
 import os
 import re
@@ -45,7 +46,12 @@ def main(src, out_jpg):
     # logo: white wordmark on dark posters, dark wordmark on light ones (img tag has data-logo="dark")
     def logo(mt):
         tag = mt.group(0)
-        path = LOGO_DARK if 'data-logo="dark"' in tag else LOGO
+        # photos: <img src="/_blob/ID" data-local="photos/file.jpg"> uses the file from this repo
+        lm = re.search(r'data-local="([^"]+)"', tag)
+        if lm:
+            path = os.path.join(ROOT, lm.group(1))
+        else:
+            path = LOGO_DARK if 'data-logo="dark"' in tag else LOGO
         return re.sub(r'src="/_blob/[0-9a-f]+"', 'src="file://%s"' % path, tag)
 
     inner = re.sub(r'<img[^>]*src="/_blob/[0-9a-f]+"[^>]*>', logo, inner)
